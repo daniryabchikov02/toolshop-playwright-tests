@@ -8,6 +8,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["api", "data", "fixtures", "pages", "tests", "playwright.config.ts"]
 }
