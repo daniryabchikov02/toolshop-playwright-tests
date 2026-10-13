@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       TOOLSHOP_VERSION: ae7caecb811dd8952c09d997e69be7cb946ecd44
@@ -17,10 +17,10 @@ jobs:
 
     steps:
       - name: Check out tests
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Check out Toolshop
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: testsmith-io/practice-software-testing
           ref: ${{ env.TOOLSHOP_VERSION }}
@@ -74,7 +74,7 @@ jobs:
             -d '{"email":"admin@practicesoftwaretesting.com","password":"welcome01"}' > /dev/null
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -98,7 +98,7 @@ jobs:
 
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: playwright-report/
