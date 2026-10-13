@@ -12,6 +12,8 @@ jobs:
     timeout-minutes: 30
     env:
       TOOLSHOP_VERSION: ae7caecb811dd8952c09d997e69be7cb946ecd44
+      COMPOSE_FILE: docker-compose.yml
+      DISABLE_LOGGING: "true"
 
     steps:
       - name: Check out tests
@@ -26,11 +28,15 @@ jobs:
 
       - name: Start Toolshop
         working-directory: toolshop
-        run: docker compose -f docker-compose.yml up -d mariadb laravel-api web angular-ui
+        run: docker compose up -d mariadb laravel-api web angular-ui
 
       - name: Install API dependencies
         working-directory: toolshop
-        run: docker compose -f docker-compose.yml run --rm composer
+        run: docker compose run --rm composer
+
+      - name: Fix file permissions
+        working-directory: toolshop
+        run: docker compose exec -T -u root laravel-api chown -R www-data:www-data storage bootstrap/cache
 
       - name: Wait for database
         working-directory: toolshop
@@ -61,6 +67,12 @@ jobs:
           docker compose logs --tail 50
           exit 1
 
+      - name: Check API login
+        run: |
+          curl -sf -X POST http://localhost:8091/users/login \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"admin@practicesoftwaretesting.com","password":"welcome01"}' > /dev/null
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -78,6 +90,11 @@ jobs:
 
       - name: Run tests
         run: npx playwright test
+
+      - name: Show Toolshop logs
+        if: failure()
+        working-directory: toolshop
+        run: docker compose logs --tail 100 laravel-api web
 
       - name: Upload report
         if: always()
