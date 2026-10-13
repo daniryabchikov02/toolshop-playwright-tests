@@ -50,4 +50,13 @@ test.describe('Product form validation', () => {
     await expect(productFormPage.successMessage).toBeHidden();
     expect(await adminApi.productsOfBrand(brand.id)).toHaveLength(0);
   });
+
+  // Known bug: the app saves products with a negative price
+  test.fail('product is not saved with a negative price', async ({ page, productFormPage, adminApi }) => {
+    await productFormPage.fill({ ...product, price: -5 });
+    await productFormPage.save();
+
+    await expect(page.getByRole('alert').first()).toBeVisible();
+    expect(await adminApi.productsOfBrand(brand.id)).toHaveLength(0);
+  });
 });
