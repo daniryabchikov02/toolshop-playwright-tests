@@ -27,7 +27,7 @@ export class ToolshopApi {
     this.tokenCreatedAt = Date.now();
   }
 
-  // Tokens expire after 5 minutes, so get a new one before that happens
+  // Tokens expire after 5 minutes
   private async headers() {
     if (Date.now() - this.tokenCreatedAt > 4 * 60 * 1000) {
       await this.login();

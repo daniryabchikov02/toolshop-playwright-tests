@@ -60,8 +60,7 @@ test.describe.serial('Admin product CRUD', () => {
     await adminProductsPage.edit(productId);
     await expect(productFormPage.nameInput).toHaveValue(product.name);
 
-    // The edit form does not load the saved brand, category, image and stock,
-    // and it can't be saved without them, so the whole form is filled again
+    // The edit form does not load the saved brand, category, image and stock
     await productFormPage.fill(updatedProduct);
     await productFormPage.save();
     await expect(productFormPage.successMessage).toBeVisible();

@@ -14,8 +14,7 @@ export interface UserData {
   password: string;
 }
 
-// The product search ignores words shorter than 3 characters and the storefront
-// search box allows at most 40 characters, so keep labels short and simple
+// The product search ignores words shorter than 3 characters
 export function uniqueName(label: string): string {
   const random = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
   return `AUTOTEST-${Date.now()}-${random} ${label}`;
