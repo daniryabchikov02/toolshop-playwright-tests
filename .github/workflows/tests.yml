@@ -1,0 +1,88 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TOOLSHOP_VERSION: ae7caecb811dd8952c09d997e69be7cb946ecd44
+
+    steps:
+      - name: Check out tests
+        uses: actions/checkout@v4
+
+      - name: Check out Toolshop
+        uses: actions/checkout@v4
+        with:
+          repository: testsmith-io/practice-software-testing
+          ref: ${{ env.TOOLSHOP_VERSION }}
+          path: toolshop
+
+      - name: Start Toolshop
+        working-directory: toolshop
+        run: docker compose -f docker-compose.yml up -d mariadb laravel-api web angular-ui
+
+      - name: Install API dependencies
+        working-directory: toolshop
+        run: docker compose -f docker-compose.yml run --rm composer
+
+      - name: Wait for database
+        working-directory: toolshop
+        run: |
+          for i in $(seq 1 30); do
+            if docker compose exec -T mariadb mysqladmin ping -h localhost -u root -proot --silent; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Database did not start"
+          exit 1
+
+      - name: Load seed data
+        working-directory: toolshop
+        run: docker compose exec -T laravel-api php artisan migrate:fresh --seed --force
+
+      - name: Wait for API and UI
+        working-directory: toolshop
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8091/status > /dev/null && curl -sf http://localhost:4200 > /dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Toolshop did not start"
+          docker compose logs --tail 50
+          exit 1
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check types
+        run: npx tsc --noEmit
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run tests
+        run: npx playwright test
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
