@@ -102,15 +102,19 @@ export class ToolshopApi {
     return this.request.delete(`${API_URL}/products/${id}`, { headers: await this.headers() });
   }
 
-  async deleteProductsOfBrand(brandId: string) {
+  async productsOfBrand(brandId: string): Promise<NamedItem[]> {
     const response = await this.request.get(`${API_URL}/products`, {
       headers: await this.headers(),
       params: { by_brand: brandId },
     });
     expect(response.status(), 'get products of brand').toBe(200);
-    for (const product of (await response.json()).data) {
-      const deleted = await this.deleteProduct(product.id);
-      expect(deleted.status(), 'delete product').toBe(204);
+    return (await response.json()).data;
+  }
+
+  async deleteProductsOfBrand(brandId: string) {
+    for (const product of await this.productsOfBrand(brandId)) {
+      const response = await this.deleteProduct(product.id);
+      expect(response.status(), 'delete product').toBe(204);
     }
   }
 
